@@ -5,6 +5,10 @@ import java.util.ArrayList;
 
 public class VisOptionsMenu extends JPanel
 {
+    /**
+     * Creates Visualization Options Menu on mouseLocation
+     * @param mouseLocation location to create menu on
+     */
     public VisOptionsMenu(Point mouseLocation)
     {
         super(new BorderLayout());
@@ -33,6 +37,7 @@ public class VisOptionsMenu extends JPanel
             {
                 // remove past accuracies and classifications
                 DV.prevCM.clear();
+                DV.prevAllDataClassifications.clear();
 
                 // set upper class
                 DV.upperClass = chosen;
@@ -90,11 +95,15 @@ public class VisOptionsMenu extends JPanel
 
                 if (choice == 0)
                 {
+                    // add previous analytics
                     DV.prevCM.add(DV.allDataCM);
+                    DV.prevAllDataClassifications.add(DV.allDataClassifications);
 
+                    // get class to be removed
                     int selected = removableList.getSelectedIndex();
                     String className = removableClasses.get(selected);
 
+                    // remove class
                     for (int i = 0; i < DV.classNumber; i++)
                     {
                         if (className.equals(classes.get(i)))
@@ -145,8 +154,7 @@ public class VisOptionsMenu extends JPanel
         visOptions.add(chooseUpperClassPanel);
 
         // if there are more than two classes
-        if (DV.classNumber > 2)
-            visOptions.add(specifyVisPanel);
+        visOptions.add(specifyVisPanel);
 
         // check if not drawing overlap
         if (DV.classNumber > 1 && !DV.drawOverlap)

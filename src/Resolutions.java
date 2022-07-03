@@ -9,7 +9,12 @@ public class Resolutions
     public static int[] confusionMatrixPane = new int[]{1200, 150};
     public static int[] singleChartPanel = new int[]{950, 270};
 
-    public static void setResolution(int resolution) {
+    /**
+     * Sizes for portions of the DV Program for various screen sizes
+     * @param resolution screen size
+     */
+    public static void setResolution(int resolution)
+    {
         // 1920x1080
         if (resolution == 0)
         {

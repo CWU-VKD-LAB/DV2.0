@@ -28,7 +28,8 @@ public class ColorOptionsMenu extends JPanel
             if (newColor != null)
                 DV.domainLines = newColor;
 
-            DataVisualization.drawGraphs(0);
+            if (DV.data != null)
+                DataVisualization.drawGraphs(0);
         });
         colors.add(domainLineColorBtn);
 
@@ -45,7 +46,8 @@ public class ColorOptionsMenu extends JPanel
             if (newColor != null)
                 DV.overlapLines = newColor;
 
-            DataVisualization.drawGraphs(0);
+            if (DV.data != null)
+                DataVisualization.drawGraphs(0);
         });
         colors.add(overlapLineColorBtn);
 
@@ -62,9 +64,28 @@ public class ColorOptionsMenu extends JPanel
             if (newColor != null)
                 DV.thresholdLine = newColor;
 
-            DataVisualization.drawGraphs(0);
+            if (DV.data != null)
+                DataVisualization.drawGraphs(0);
         });
         colors.add(thresholdLineColorBtn);
+
+        // set background color
+        JButton backgroundColorBtn = new JButton("Background Color");
+        backgroundColorBtn.setToolTipText("Sets color of graph background");
+        backgroundColorBtn.addActionListener(e ->
+        {
+            Color newColor = JColorChooser.showDialog(
+                    colorOptionsFrame,
+                    "Chose Background Color",
+                    colorOptionsFrame.getBackground());
+
+            if (newColor != null)
+                DV.background = newColor;
+
+            if (DV.data != null)
+                DataVisualization.drawGraphs(0);
+        });
+        colors.add(backgroundColorBtn);
 
         // set upper graph color
         JButton upperGraphColorBtn = new JButton("Upper Graph Color");
@@ -79,7 +100,8 @@ public class ColorOptionsMenu extends JPanel
             if (newColor != null)
                 DV.graphColors[0] = newColor;
 
-            DataVisualization.drawGraphs(0);
+            if (DV.data != null)
+                DataVisualization.drawGraphs(0);
         });
         colors.add(upperGraphColorBtn);
 
@@ -96,7 +118,8 @@ public class ColorOptionsMenu extends JPanel
             if (newColor != null)
                 DV.graphColors[1] = newColor;
 
-            DataVisualization.drawGraphs(0);
+            if (DV.data != null)
+                DataVisualization.drawGraphs(0);
         });
         colors.add(lowerGraphColorBtn);
 

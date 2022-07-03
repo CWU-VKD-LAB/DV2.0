@@ -3,7 +3,10 @@ import java.awt.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 public class ConfusionMatrices
 {
@@ -20,6 +23,9 @@ public class ConfusionMatrices
     // holds current classes
     static ArrayList<String> curClasses;
 
+    // holds confusion matrices in order
+    static Map<Integer, JTextArea> confusionMatrices;
+
 
     /**
      * Generates all data, data without overlap,
@@ -27,27 +33,87 @@ public class ConfusionMatrices
      */
     public static void generateConfusionMatrices()
     {
+        // holds confusion matrices
+        confusionMatrices = new HashMap<>();
+
         // get current classes being visualized
         getCurClasses();
 
-        // remove old confusion matrices
+        // remove old analytics
         DV.confusionMatrixPanel.removeAll();
+        DV.crossValidationPanel.removeAll();
 
-        // add confusion matrices for previous splits
-        addOldConfusionMatrices();
+        // add confusion matrices from previous splits
+        AddOldConfusionMatrices oldCM = new AddOldConfusionMatrices();
 
-        // create new confusion matrices
-        getAllDataConfusionMatrix();
-        getDataWithoutOverlapConfusionMatrix();
-        getOverlapConfusionMatrix();
-        getWorstCaseConfusionMatrix();
-        getUserValidationConfusionMatrix();
+        if (DV.prevAllDataChecked)
+            oldCM.execute();
+
+        // create all data confusion matrix
+        GetAllDataConfusionMatrix allCM = new GetAllDataConfusionMatrix();
+
+        if (DV.allDataChecked)
+            allCM.execute();
+
+        // create data without overlap confusion matrix
+        GetDataWithoutOverlapConfusionMatrix withoutCM = new GetDataWithoutOverlapConfusionMatrix();
+
+        if (DV.withoutOverlapChecked || DV.worstCaseChecked)
+            withoutCM.execute();
+
+        // create overlap confusion matrix
+        GetOverlapConfusionMatrix overlapCM = new GetOverlapConfusionMatrix();
+
+        if (DV.overlapChecked || DV.worstCaseChecked)
+            overlapCM.execute();
+
+        // create worst case confusion matrix
+        GetWorstCaseConfusionMatrix worstCM = new GetWorstCaseConfusionMatrix();
+
+        try
+        {
+            if (DV.worstCaseChecked && withoutCM.get() && overlapCM.get())
+                worstCM.execute();
+        }
+        catch (ExecutionException | InterruptedException e)
+        {
+            e.printStackTrace();
+            return;
+        }
+
+        // create user validation confusion matrix
+        GetUserValidationConfusionMatrix userCM = new GetUserValidationConfusionMatrix();
+
+        if (DV.userValidationImported && DV.userValidationChecked)
+            userCM.execute();
 
         // run k-fold cross validation
         if (DV.crossValidationChecked)
-        {
-            DV.crossValidationPanel.removeAll();
             runKFoldCrossValidation();
+
+        // wait for threads to finish
+        try
+        {
+            if (DV.prevAllDataChecked) oldCM.get();
+            if (DV.allDataChecked) allCM.get();
+            if (DV.withoutOverlapChecked) withoutCM.get();
+            if (DV.overlapChecked) overlapCM.get();
+            if (DV.worstCaseChecked) worstCM.get();
+            if (DV.userValidationImported && DV.userValidationChecked) userCM.get();
+        }
+        catch (ExecutionException | InterruptedException e)
+        {
+            e.printStackTrace();
+            return;
+        }
+
+        // add confusion matrices in order
+        for (int i = 0; i < DV.prevCM.size() + 6; i++)
+        {
+            if (confusionMatrices.containsKey(i))
+            {
+                DV.confusionMatrixPanel.add(confusionMatrices.get(i));
+            }
         }
     }
 
@@ -83,9 +149,10 @@ public class ConfusionMatrices
     /**
      * Regenerates old confusion matrices from previous data splits
      */
-    private static void addOldConfusionMatrices()
+    private static class AddOldConfusionMatrices extends SwingWorker<Boolean, Void>
     {
-        if (DV.prevAllDataChecked)
+        @Override
+        protected Boolean doInBackground()
         {
             // set all previous confusion matrices
             for (int i = 0; i < DV.prevCM.size(); i++)
@@ -93,8 +160,10 @@ public class ConfusionMatrices
                 JTextArea confusionMatrix = new JTextArea(DV.prevCM.get(i));
                 confusionMatrix.setFont(confusionMatrix.getFont().deriveFont(Font.BOLD, 12f));
                 confusionMatrix.setEditable(false);
-                DV.confusionMatrixPanel.add(confusionMatrix);
+                confusionMatrices.put(i, confusionMatrix);
             }
+
+            return true;
         }
     }
 
@@ -103,13 +172,14 @@ public class ConfusionMatrices
      * Generates confusion matrix with all data
      * Confusion matrix uses its own function
      */
-    private static void getAllDataConfusionMatrix()
+    private static class GetAllDataConfusionMatrix extends SwingWorker<Boolean, Void>
     {
-        if (DV.allDataChecked)
+
+        @Override
+        protected Boolean doInBackground()
         {
+            DV.allDataClassifications = new int[]{ 0, 0 };
             int totalPoints = 0;
-            int totalPointsUsed = 0;
-            int correctPoints = 0;
 
             // get point distribution
             int[][] pntDist = new int[2][2];
@@ -134,12 +204,12 @@ public class ConfusionMatrices
                                 if (endpoint < DV.threshold)
                                 {
                                     pntDist[0][0]++;
-                                    totalPointsUsed++;
-                                    correctPoints++;
+                                    DV.allDataClassifications[1]++;
+                                    DV.allDataClassifications[0]++;
                                 }
                                 else
                                 {
-                                    totalPointsUsed++;
+                                    DV.allDataClassifications[1]++;
                                     pntDist[0][1]++;
                                 }
                             }
@@ -149,12 +219,12 @@ public class ConfusionMatrices
                                 if (endpoint > DV.threshold)
                                 {
                                     pntDist[0][0]++;
-                                    totalPointsUsed++;
-                                    correctPoints++;
+                                    DV.allDataClassifications[1]++;
+                                    DV.allDataClassifications[0]++;
                                 }
                                 else
                                 {
-                                    totalPointsUsed++;
+                                    DV.allDataClassifications[1]++;
                                     pntDist[0][1]++;
                                 }
                             }
@@ -164,12 +234,12 @@ public class ConfusionMatrices
                                 if (endpoint > DV.threshold)
                                 {
                                     pntDist[1][1]++;
-                                    totalPointsUsed++;
-                                    correctPoints++;
+                                    DV.allDataClassifications[1]++;
+                                    DV.allDataClassifications[0]++;
                                 }
                                 else
                                 {
-                                    totalPointsUsed++;
+                                    DV.allDataClassifications[1]++;
                                     pntDist[1][0]++;
                                 }
                             }
@@ -179,12 +249,12 @@ public class ConfusionMatrices
                                 if (endpoint < DV.threshold)
                                 {
                                     pntDist[1][1]++;
-                                    totalPointsUsed++;
-                                    correctPoints++;
+                                    DV.allDataClassifications[1]++;
+                                    DV.allDataClassifications[0]++;
                                 }
                                 else
                                 {
-                                    totalPointsUsed++;
+                                    DV.allDataClassifications[1]++;
                                     pntDist[1][0]++;
                                 }
                             }
@@ -210,10 +280,25 @@ public class ConfusionMatrices
             }
 
             // append accuracy
-            cm.append(String.format("\nAccuracy: %.2f%%", 100.0 * correctPoints / totalPointsUsed));
+            cm.append(String.format("\nAccuracy: %.2f%%", 100.0 * DV.allDataClassifications[0] / DV.allDataClassifications[1]));
+
+            // add overall accuracy if applicable
+            if (DV.prevAllDataClassifications.size() > 0)
+            {
+                int correct = DV.allDataClassifications[0];
+                int used = DV.allDataClassifications[1];
+
+                for (int i = 0; i < DV.prevAllDataClassifications.size(); i++)
+                {
+                    correct += DV.prevAllDataClassifications.get(i)[0];
+                    used += DV.prevAllDataClassifications.get(i)[1];
+                }
+
+                cm.append(String.format("\nOverall Accuracy: %.2f%%", 100.0 * correct  / used));
+            }
 
             // append percentage of total points used
-            cm.append(String.format("\nData Used: %.2f%%", 100.0 * totalPointsUsed / totalPoints));
+            cm.append(String.format("\nData Used: %.2f%%", 100.0 * DV.allDataClassifications[1] / totalPoints));
 
             // set current all data confusion matrix string
             DV.allDataCM = cm.toString();
@@ -222,7 +307,9 @@ public class ConfusionMatrices
             JTextArea confusionMatrix = new JTextArea(DV.allDataCM);
             confusionMatrix.setFont(confusionMatrix.getFont().deriveFont(Font.BOLD, 12f));
             confusionMatrix.setEditable(false);
-            DV.confusionMatrixPanel.add(confusionMatrix);
+            confusionMatrices.put(DV.prevCM.size(), confusionMatrix);
+
+            return true;
         }
     }
 
@@ -231,9 +318,10 @@ public class ConfusionMatrices
      * Generates confusion matrix without overlap data
      * Confusion matrix uses its own function
      */
-    private static void getDataWithoutOverlapConfusionMatrix()
+    private static class GetDataWithoutOverlapConfusionMatrix extends SwingWorker<Boolean, Void>
     {
-        if (DV.withoutOverlapChecked || DV.worstCaseChecked)
+        @Override
+        protected Boolean doInBackground()
         {
             // store overlapping datapoints in upper and lower graphs
             ArrayList<double[]> upper = new ArrayList<>();
@@ -286,11 +374,13 @@ public class ConfusionMatrices
                 }
             }
 
+            String fileName = System.getProperty("user.dir") + "\\src\\Python\\DWO_CM.csv";
+
             // create file for python process
-            createCSVFileForConfusionMatrix(new ArrayList<>(List.of(upper, lower)));
+            createCSVFileForConfusionMatrix(new ArrayList<>(List.of(upper, lower)), fileName);
 
             // get confusion matrix with LDA
-            ArrayList<String> cmValues = LDAForConfusionMatrices(true);
+            ArrayList<String> cmValues = LDAForConfusionMatrices(true, fileName);
 
             if (DV.withoutOverlapChecked)
             {
@@ -322,9 +412,11 @@ public class ConfusionMatrices
                     JTextArea confusionMatrix = new JTextArea(cm.toString());
                     confusionMatrix.setFont(confusionMatrix.getFont().deriveFont(Font.BOLD, 12f));
                     confusionMatrix.setEditable(false);
-                    DV.confusionMatrixPanel.add(confusionMatrix);
+                    confusionMatrices.put(DV.prevCM.size() + 1, confusionMatrix);
                 }
             }
+
+            return true;
         }
     }
 
@@ -333,9 +425,11 @@ public class ConfusionMatrices
      * Generates confusion matrix with only overlap data
      * Confusion matrix uses its own function
      */
-    private static void getOverlapConfusionMatrix()
+    private static class GetOverlapConfusionMatrix extends SwingWorker<Boolean, Void>
     {
-        if (DV.overlapChecked || DV.worstCaseChecked)
+
+        @Override
+        protected Boolean doInBackground()
         {
             // store overlapping datapoints in upper and lower graphs
             upper = new ArrayList<>();
@@ -393,11 +487,13 @@ public class ConfusionMatrices
 
             if (DV.overlapChecked)
             {
+                String fileName = System.getProperty("user.dir") + "\\src\\Python\\OL_CM.csv";
+
                 // create file for python process
-                createCSVFileForConfusionMatrix(new ArrayList<>(List.of(upper, lower)));
+                createCSVFileForConfusionMatrix(new ArrayList<>(List.of(upper, lower)), fileName);
 
                 // get confusion matrix with LDA
-                ArrayList<String> cmValues = LDAForConfusionMatrices(false);
+                ArrayList<String> cmValues = LDAForConfusionMatrices(false, fileName);
 
                 if (cmValues != null && cmValues.size() > 0)
                 {
@@ -427,7 +523,7 @@ public class ConfusionMatrices
                     JTextArea confusionMatrix = new JTextArea(cm.toString());
                     confusionMatrix.setFont(confusionMatrix.getFont().deriveFont(Font.BOLD, 12f));
                     confusionMatrix.setEditable(false);
-                    DV.confusionMatrixPanel.add(confusionMatrix);
+                    confusionMatrices.put(DV.prevCM.size() + 2, confusionMatrix);
                 }
                 else if (cmValues != null)
                 {
@@ -457,9 +553,11 @@ public class ConfusionMatrices
                     JTextArea confusionMatrix = new JTextArea(cm.toString());
                     confusionMatrix.setFont(confusionMatrix.getFont().deriveFont(Font.BOLD, 12f));
                     confusionMatrix.setEditable(false);
-                    DV.confusionMatrixPanel.add(confusionMatrix);
+                    confusionMatrices.put(DV.prevCM.size() + 3, confusionMatrix);
                 }
             }
+
+            return true;
         }
     }
 
@@ -468,9 +566,10 @@ public class ConfusionMatrices
      * Generates confusion matrix with only overlap data
      * Confusion matrix uses function from getDataWithoutOverlapConfusionMatrix
      */
-    private static void getWorstCaseConfusionMatrix()
+    private static class GetWorstCaseConfusionMatrix extends SwingWorker<Boolean, Void>
     {
-        if (DV.worstCaseChecked)
+        @Override
+        protected Boolean doInBackground()
         {
             // get double[][] arrays for data
             double[][] tmpUpper = new double[upper.size()][];
@@ -581,14 +680,20 @@ public class ConfusionMatrices
             JTextArea confusionMatrix = new JTextArea(cm.toString());
             confusionMatrix.setFont(confusionMatrix.getFont().deriveFont(Font.BOLD, 12f));
             confusionMatrix.setEditable(false);
-            DV.confusionMatrixPanel.add(confusionMatrix);
+            confusionMatrices.put(DV.prevCM.size() + 4, confusionMatrix);
+
+            return true;
         }
     }
 
 
-    private static void getUserValidationConfusionMatrix()
+    /**
+     * Generates confusion matrix with user imported validation data
+     */
+    private static class GetUserValidationConfusionMatrix extends SwingWorker<Boolean, Void>
     {
-        if (DV.validationClasses != null && DV.userValidationChecked)
+        @Override
+        protected Boolean doInBackground()
         {
             // get data without overlap threshold
             double worstCaseThreshold = LDAFunction.get(LDAFunction.size() - 1);
@@ -717,7 +822,9 @@ public class ConfusionMatrices
             JTextArea confusionMatrix = new JTextArea( cm.toString());
             confusionMatrix.setFont(confusionMatrix.getFont().deriveFont(Font.BOLD, 12f));
             confusionMatrix.setEditable(false);
-            DV.confusionMatrixPanel.add(confusionMatrix);
+            confusionMatrices.put(DV.prevCM.size() + 5, confusionMatrix);
+
+            return true;
         }
     }
 
@@ -725,25 +832,23 @@ public class ConfusionMatrices
     /**
      * Creates CSV file representing specified data from
      * the upper class as class 1 and lower graph as class 2
+     * @param data data to be used in csv file
+     * @param fileName name of file to be created
      */
-    private static void createCSVFileForConfusionMatrix(ArrayList<ArrayList<double[]>> data)
+    private static void createCSVFileForConfusionMatrix(ArrayList<ArrayList<double[]>> data, String fileName)
     {
         try
         {
-            // create csv file
-            File csv = new File("src\\LDA\\DV_CM_data.csv");
-            Files.deleteIfExists(csv.toPath());
-
             // write to csv file
-            PrintWriter out = new PrintWriter(csv);
+            Writer out = new FileWriter(fileName, false);
 
             // create header for file
             for (int i = 0; i < DV.fieldLength; i++)
             {
                 if (i != DV.fieldLength - 1)
-                    out.print("feature,");
+                    out.write("feature,");
                 else
-                    out.print("feature,class\n");
+                    out.write("feature,class\n");
             }
 
             // check all classes
@@ -754,9 +859,9 @@ public class ConfusionMatrices
                     for (int k = 0; k < DV.fieldLength; k++)
                     {
                         if (k != DV.fieldLength - 1)
-                            out.printf("%f,", data.get(i).get(j)[k]);
+                            out.write(String.format("%f,", data.get(i).get(j)[k]));
                         else
-                            out.printf("%f," + i + "\n", data.get(i).get(j)[k]);
+                            out.write(String.format("%f," + i + "\n", data.get(i).get(j)[k]));
                     }
                 }
             }
@@ -774,8 +879,9 @@ public class ConfusionMatrices
     /**
      * Gets functions for confusion matrices
      * @param storeFunction whether to store angles and threshold
+     * @param fileName name of csv file storing data
      */
-    private static ArrayList<String> LDAForConfusionMatrices(boolean storeFunction)
+    private static ArrayList<String> LDAForConfusionMatrices(boolean storeFunction, String fileName)
     {
         // get python boolean
         String pyBool;
@@ -786,9 +892,9 @@ public class ConfusionMatrices
             pyBool = "";
 
         // create LDA (python) process
-        ProcessBuilder lda = new ProcessBuilder(System.getProperty("user.dir") + "\\venv\\Scripts\\python",
-                System.getProperty("user.dir") + "\\src\\LDA\\ConfusionMatrixGenerator.py",
-                System.getProperty("user.dir") + "\\src\\LDA\\DV_CM_data.csv",
+        ProcessBuilder lda = new ProcessBuilder("cmd", "/c",
+                System.getProperty("user.dir") + "\\src\\Python\\ConfusionMatrixGenerator\\ConfusionMatrixGenerator.exe",
+                fileName,
                 pyBool);
 
         try
@@ -825,19 +931,23 @@ public class ConfusionMatrices
             }
 
             // delete created file
-            //File fileToDelete = new File("src\\LDA\\Overlap_Data.csv");
-            //Files.deleteIfExists(fileToDelete.toPath());
+            File fileToDelete = new File(fileName);
+            Files.deleteIfExists(fileToDelete.toPath());
 
             // return confusion matrix
             return classifications;
         }
         catch (IOException e)
         {
-            JOptionPane.showMessageDialog(DV.mainFrame, "Error: could not run Linear Discriminant Analysis", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(DV.mainFrame, "Error: could not create confusion matrix", "Error", JOptionPane.ERROR_MESSAGE);
             return null;
         }
     }
 
+
+    /**
+     * Runs k-fold cross validation on dataset
+     */
     static void runKFoldCrossValidation()
     {
         // store datapoints in upper and lower graphs
@@ -881,15 +991,16 @@ public class ConfusionMatrices
             }
         }
 
+        String fileName = System.getProperty("user.dir") + "\\src\\Python\\k_fold.csv";
+
         // create file for python process
-        createCSVFileForConfusionMatrix(new ArrayList<>(List.of(upper, lower)));
+        createCSVFileForConfusionMatrix(new ArrayList<>(List.of(upper, lower)), fileName);
 
         // create k-fold (python) process
-        ProcessBuilder cv = new ProcessBuilder(System.getProperty("user.dir") + "\\venv\\Scripts\\python",
-                System.getProperty("user.dir") + "\\src\\LDA\\kFoldCrossValidation.py",
-                System.getProperty("user.dir") + "\\src\\LDA\\DV_CM_data.csv",
+        ProcessBuilder cv = new ProcessBuilder("cmd", "/c",
+                System.getProperty("user.dir") + "\\src\\Python\\kFoldCrossValidation\\kFoldCrossValidation.exe",
+                fileName,
                 String.valueOf(DV.kFolds));
-        //lda.inheritIO();
 
         try
         {
@@ -919,6 +1030,10 @@ public class ConfusionMatrices
                     table.append("\n").append(row);
                 }
 
+                // delete created file
+                File fileToDelete = new File(fileName);
+                Files.deleteIfExists(fileToDelete.toPath());
+
                 // set overlap confusion matrix
                 JTextArea cross_validate = new JTextArea(table.toString());
                 cross_validate.setFont(cross_validate.getFont().deriveFont(Font.BOLD, 12f));
@@ -930,7 +1045,5 @@ public class ConfusionMatrices
         {
             JOptionPane.showMessageDialog(DV.mainFrame, "Error: could not run k-Fold Cross Validation", "Error", JOptionPane.ERROR_MESSAGE);
         }
-        // get output
-        // display output
     }
 }

@@ -4,6 +4,12 @@ import java.util.Hashtable;
 
 public class AngleSliders
 {
+    /**
+     * Creates panel for a features angle/weight slider
+     * @param fieldName name of feature to be weighted
+     * @param angle weight of feature
+     * @param index index of feature
+     */
     public static void createSliderPanel(String fieldName, int angle, int index)
     {
         // text for angle

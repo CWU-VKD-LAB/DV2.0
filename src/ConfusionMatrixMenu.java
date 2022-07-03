@@ -3,6 +3,10 @@ import java.awt.*;
 
 public class ConfusionMatrixMenu extends JPanel
 {
+    /**
+     * Creates Confusion Matrix Menu on mouseLocation
+     * @param mouseLocation location to create menu on
+     */
     public ConfusionMatrixMenu(Point mouseLocation)
     {
         super(new BorderLayout());
@@ -183,6 +187,15 @@ public class ConfusionMatrixMenu extends JPanel
                         {
                             // set folds
                             DV.kFolds = folds;
+
+                            // regenerate confusion matrices
+                            ConfusionMatrices.generateConfusionMatrices();
+
+                            // revalidate graphs and confusion matrices
+                            DV.graphPanel.repaint();
+                            DV.crossValidationPanel.repaint();
+                            DV.graphPanel.revalidate();
+                            DV.crossValidationPanel.revalidate();
                         }
                         else
                         {
