@@ -1585,7 +1585,10 @@ public class DataVisualization
                                 else
                                 {
                                     graphLines.addSeries(line);
-                                    lineRenderer.setSeriesPaint(lineCnt, DV.graphColors[UPPER_OR_LOWER]);
+                                    // Use class-specific color for multiple classes in lower graph
+                                    Color lineColor = (UPPER_OR_LOWER == 1 && DATA_OBJECTS.size() > 1) ? 
+                                        DV.getClassColor(data.className) : DV.graphColors[UPPER_OR_LOWER];
+                                    lineRenderer.setSeriesPaint(lineCnt, lineColor);
                                     lineRenderer.setSeriesStroke(lineCnt, graphLineStroke);
 
                                     endpoints.addSeries(endpointSeries);
@@ -1794,46 +1797,91 @@ public class DataVisualization
             // get maximum frequency for frequency graph
             double maxFrequency = getMaxFrequency();
 
-            // get bar lengths
-            int[] barRanges = new int[400];
-            for (DataObject dataObj : DATA_OBJECTS)
-            {
-                // translate endpoint to slider ticks
-                // increment bar which endpoint lands
-                for (int i = 0; i < dataObj.data.length; i++)
-                {
-                    int tmpTick = (int) (Math.round((dataObj.coordinates[i][DV.fieldLength-1][0] / DV.fieldLength * 200) + 200));
-                    barRanges[tmpTick]++;
-                }
-            }
-
             // get interval and bounds
             double interval = DV.fieldLength / 200.0;
             double maxBound = -DV.fieldLength;
             double minBound = -DV.fieldLength;
 
-            // add series to collection
-            for (int i = 0; i < 400; i++)
+            // For multiple classes in lower graph, create separate bar series for each class
+            if (UPPER_OR_LOWER == 1 && DATA_OBJECTS.size() > 1)
             {
-                // get max bound
-                maxBound += interval;
+                int seriesIndex = 0;
+                for (DataObject dataObj : DATA_OBJECTS)
+                {
+                    // get bar lengths for this specific class
+                    int[] barRanges = new int[400];
+                    for (int i = 0; i < dataObj.data.length; i++)
+                    {
+                        int tmpTick = (int) (Math.round((dataObj.coordinates[i][DV.fieldLength-1][0] / DV.fieldLength * 200) + 200));
+                        barRanges[tmpTick]++;
+                    }
 
-                XYIntervalSeries bar = new XYIntervalSeries(i, false, true);
-                bar.setNotify(false);
+                    // reset bounds for this class
+                    maxBound = -DV.fieldLength;
+                    minBound = -DV.fieldLength;
 
-                // bar width = interval
-                // bar height = (total endpoints on bar) / (total endpoints)
-                // buffer = maximum bar height
-                if (UPPER_OR_LOWER == 1)
-                    bar.add(interval, minBound, maxBound, (-barRanges[i] / maxFrequency) * buffer, -buffer, 0);
-                else
-                    bar.add(interval, minBound, maxBound, (barRanges[i] / maxFrequency) * buffer, 0, buffer);
+                    // add series for this class
+                    for (int i = 0; i < 400; i++)
+                    {
+                        // get max bound
+                        maxBound += interval;
 
-                bars.addSeries(bar);
-                barRenderer.setSeriesPaint(i, DV.graphColors[UPPER_OR_LOWER]);
+                        XYIntervalSeries bar = new XYIntervalSeries(seriesIndex * 400 + i, false, true);
+                        bar.setNotify(false);
 
-                // set min bound to old max
-                minBound = maxBound;
+                        // bar width = interval
+                        // bar height = (total endpoints on bar) / (total endpoints)
+                        // buffer = maximum bar height
+                        bar.add(interval, minBound, maxBound, (-barRanges[i] / maxFrequency) * buffer, -buffer, 0);
+
+                        bars.addSeries(bar);
+                        barRenderer.setSeriesPaint(seriesIndex * 400 + i, DV.getClassColor(dataObj.className));
+
+                        // set min bound to old max
+                        minBound = maxBound;
+                    }
+                    seriesIndex++;
+                }
+            }
+            else
+            {
+                // Original logic for single class or upper graph
+                // get bar lengths
+                int[] barRanges = new int[400];
+                for (DataObject dataObj : DATA_OBJECTS)
+                {
+                    // translate endpoint to slider ticks
+                    // increment bar which endpoint lands
+                    for (int i = 0; i < dataObj.data.length; i++)
+                    {
+                        int tmpTick = (int) (Math.round((dataObj.coordinates[i][DV.fieldLength-1][0] / DV.fieldLength * 200) + 200));
+                        barRanges[tmpTick]++;
+                    }
+                }
+
+                // add series to collection
+                for (int i = 0; i < 400; i++)
+                {
+                    // get max bound
+                    maxBound += interval;
+
+                    XYIntervalSeries bar = new XYIntervalSeries(i, false, true);
+                    bar.setNotify(false);
+
+                    // bar width = interval
+                    // bar height = (total endpoints on bar) / (total endpoints)
+                    // buffer = maximum bar height
+                    if (UPPER_OR_LOWER == 1)
+                        bar.add(interval, minBound, maxBound, (-barRanges[i] / maxFrequency) * buffer, -buffer, 0);
+                    else
+                        bar.add(interval, minBound, maxBound, (barRanges[i] / maxFrequency) * buffer, 0, buffer);
+
+                    bars.addSeries(bar);
+                    barRenderer.setSeriesPaint(i, DV.graphColors[UPPER_OR_LOWER]);
+
+                    // set min bound to old max
+                    minBound = maxBound;
+                }
             }
 
             chart.setNotify(true);

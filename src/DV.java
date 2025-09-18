@@ -75,6 +75,20 @@ public class DV extends JFrame
             new Color(84, 133, 145)       // lower graph (dark cyan)
     };
 
+    // class-specific colors for multiple classes
+    static Color[] classColors = new Color[] {
+            Color.GREEN,    // benign (green)
+            Color.RED,      // malignant (red)
+            new Color(0, 0, 255),      // blue
+            new Color(255, 165, 0),    // orange
+            new Color(128, 0, 128),    // purple
+            new Color(255, 192, 203),  // pink
+            new Color(0, 255, 255),    // cyan
+            new Color(255, 255, 0),    // yellow
+            new Color(165, 42, 42),    // brown
+            new Color(128, 128, 128)   // gray
+    };
+
     // endpoint colors
     static Color endpoints = Color.BLACK;
     static Color midpoints = Color.BLACK;
@@ -1784,5 +1798,27 @@ public class DV extends JFrame
         }
 
         return classes.toString();
+    }
+
+    /**
+     * Gets the appropriate color for a class based on its name
+     * @param className the name of the class
+     * @return the color for the class
+     */
+    public static Color getClassColor(String className)
+    {
+        if (className == null) return classColors[0];
+        
+        String lowerClassName = className.toLowerCase();
+        
+        // Special handling for benign and malignant
+        if (lowerClassName.contains("benign"))
+            return Color.GREEN;
+        else if (lowerClassName.contains("malignant"))
+            return Color.RED;
+        
+        // For other classes, use a hash-based approach to get consistent colors
+        int hash = Math.abs(className.hashCode());
+        return classColors[hash % classColors.length];
     }
 }
