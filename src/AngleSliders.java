@@ -103,24 +103,24 @@ public class AngleSliders
         // action listener for text field
         angleText.addActionListener(e ->
         {
-            // transform raw value to slider value
-            double fieldAngle = Double.parseDouble(angleText.getText());
-            int sliderValue = (int) (fieldAngle * 100);
-
-            // check if angle is within 0 and 180 degrees
-            if (sliderValue >= 0 && sliderValue <= 18000)
+            try
             {
-                try
+                // transform raw value to slider value
+                double fieldAngle = Double.parseDouble(angleText.getText());
+                int sliderValue = (int) (fieldAngle * 100);
+
+                // check if angle is within 0 and 180 degrees
+                if (sliderValue >= 0 && sliderValue <= 18000)
                 {
                     // set new value
                     angleSlider.setValue(sliderValue);
                     angleLabel.setText(fieldName + " Angle: " + fieldAngle);
                     DV.angles[index] = fieldAngle;
                 }
-                catch (NumberFormatException nfe)
-                {
-                    System.err.println("Illegal Input");
-                }
+            }
+            catch (NumberFormatException nfe)
+            {
+                System.err.println("Illegal Input");
             }
         });
 
