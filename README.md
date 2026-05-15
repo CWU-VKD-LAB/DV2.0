@@ -33,11 +33,28 @@ Please refer to the user manual for specifics on any of the information above.
 
 ### Install and Run
 
-1. Clone repository and open in explorer
-2. Open "run" directory
-3. Unzip DV.zip
-4. Run "DV.exe"
-5. Follow instructions in "Run Instructions" for additional help
+Important: `run/DV.zip` is stored using **Git LFS**. If you use GitHub’s “Download ZIP” for this repository (or clone without Git LFS), `DV.zip` will be a small pointer file and will appear empty/invalid when opened.
+
+1. Install Git LFS and clone the repository:
+   - `git lfs install`
+   - `git clone <repo>`
+   - `git lfs pull`
+2. Open the `run` directory
+3. Extract `DV.zip`
+4. Start the application:
+   - Prefer `run.bat` (included inside `DV.zip`), or
+   - Run `java -jar DV.jar`
+5. See `Run Instructions.pdf` for usage walkthroughs once the app is running
+
+### Rebuild `run/DV.zip` (Windows distribution)
+
+From the repository root on a Windows machine with **Java 17** (the script can locate JDK 17 if it is installed) and **Python 3.10–3.12** (required for PyInstaller 5.x; Python 3.14 is not used):
+
+```bat
+scripts\package-dv.bat
+```
+
+The script creates `.venv-package`, installs `scripts/requirements-package.txt`, compiles `DV.jar` from `src/`, runs PyInstaller on `source/Python/code_and_pyinstaller_spec/`, and writes `run/DV.zip`. It does not reuse committed bundles under `source/Python/<tool>/`. Dev-only flags: `-SkipJava`, `-SkipPython`, `-SkipZip` (see `scripts/package-dv.ps1`). Override the interpreter with `DV_PACKAGE_PYTHON` if needed.
 
 ### Build and Run from Source
 

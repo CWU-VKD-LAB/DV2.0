@@ -106,7 +106,7 @@ public class VisualizationMenu extends JPanel
         JButton chooseUpperClassBtn = new JButton("Upper Class");
         chooseUpperClassBtn.setToolTipText("Choose class to be visualized on upper graph");
         chooseUpperClassBtn.setFont(chooseUpperClassBtn.getFont().deriveFont(12f));
-        chooseUpperClassBtn.addActionListener(_ ->
+        chooseUpperClassBtn.addActionListener(e ->
         {
             if (DV.trainData != null)
             {
@@ -179,7 +179,7 @@ public class VisualizationMenu extends JPanel
         JButton specifyVisBtn = new JButton("Specify Visualization");
         specifyVisBtn.setToolTipText("Removes one class from the lower graph");
         specifyVisBtn.setFont(specifyVisBtn.getFont().deriveFont(12f));
-        specifyVisBtn.addActionListener(_ ->
+        specifyVisBtn.addActionListener(e ->
         {
             if (DV.trainData != null)
             {
@@ -255,7 +255,7 @@ public class VisualizationMenu extends JPanel
         JButton reorderBtn = new JButton("Reorder Attributes");
         reorderBtn.setToolTipText("Reorder attributes in visualization");
         reorderBtn.setFont(reorderBtn.getFont().deriveFont(12f));
-        reorderBtn.addActionListener(_ ->
+        reorderBtn.addActionListener(e ->
         {
             if (DV.trainData != null)
             {
@@ -353,7 +353,7 @@ public class VisualizationMenu extends JPanel
     {
         JButton up = new JButton("Up");
         up.setToolTipText("Moves selected row up.");
-        up.addActionListener(_ ->
+        up.addActionListener(e ->
         {
             int index = table.getSelectedRow();
 
@@ -390,7 +390,7 @@ public class VisualizationMenu extends JPanel
     {
         JButton down = new JButton("Down");
         down.setToolTipText("Moves selected row down.");
-        down.addActionListener(_ ->
+        down.addActionListener(e ->
         {
             int index = table.getSelectedRow();
 
@@ -426,7 +426,7 @@ public class VisualizationMenu extends JPanel
     {
         JButton original = new JButton("Original Order");
         original.setToolTipText("Order attributes in their original order.");
-        original.addActionListener(_ ->
+        original.addActionListener(e ->
         {
             // sort ascending
             quickSort(DV.originalAttributeOrder, 0, DV.originalAttributeOrder.size() - 1);
@@ -457,7 +457,7 @@ public class VisualizationMenu extends JPanel
     {
         JButton dt = new JButton("Decision Tree Order");
         dt.setToolTipText("Order attributes according to a Decision Tree.");
-        dt.addActionListener(_ ->
+        dt.addActionListener(e ->
         {
             // get decision tree order
             double[] dt_weight = new double[DV.fieldLength];
@@ -556,7 +556,7 @@ public class VisualizationMenu extends JPanel
     {
         JButton lessToGreat = new JButton("Ascending Contribution");
         lessToGreat.setToolTipText("Order attributes from least contributing (largest angle) to most contributing (smallest angle).");
-        lessToGreat.addActionListener(_ ->
+        lessToGreat.addActionListener(e ->
         {
             // bubble sort ascending
             quickSort(DV.angles, 0, DV.angles.length - 1);
@@ -586,7 +586,7 @@ public class VisualizationMenu extends JPanel
     {
         JButton greatToLess = new JButton("Descending Contribution");
         greatToLess.setToolTipText("Order attributes from most contributing (smallest angle) to least contributing (largest angle).");
-        greatToLess.addActionListener(_ ->
+        greatToLess.addActionListener(e ->
         {
             // bubble sort descending
             quickSortDescending(DV.angles, 0, DV.angles.length - 1);
@@ -879,7 +879,7 @@ public class VisualizationMenu extends JPanel
         JButton removeBtn = new JButton("Remove Attributes");
         removeBtn.setToolTipText("Remove attributes in visualization");
         removeBtn.setFont(removeBtn.getFont().deriveFont(12f));
-        removeBtn.addActionListener(_ ->
+        removeBtn.addActionListener(e ->
         {
             if (DV.trainData != null)
             {
@@ -892,7 +892,7 @@ public class VisualizationMenu extends JPanel
                 {
                     final int index = DV.standardFieldNames.indexOf(field);
                     attributes[index] = new JCheckBox(field, DV.activeAttributes.get(index));
-                    attributes[index].addActionListener(_ ->
+                    attributes[index].addActionListener(ae ->
                     {
                         DV.activeAttributes.set(index, attributes[index].isSelected());
 
@@ -930,7 +930,7 @@ public class VisualizationMenu extends JPanel
         JButton scalarVisFuncBtn = new JButton("Scalar Function");
         scalarVisFuncBtn.setToolTipText("Applies given function to all attributes of all data points");
         scalarVisFuncBtn.setFont(scalarVisFuncBtn.getFont().deriveFont(12f));
-        scalarVisFuncBtn.addActionListener(_ ->
+        scalarVisFuncBtn.addActionListener(e ->
         {
             // popup asking for number of folds
             JPanel funcPanel = new JPanel(new BorderLayout());
@@ -1053,7 +1053,7 @@ public class VisualizationMenu extends JPanel
         JButton vectorVisFuncBtn = new JButton("n-D Point Function");
         vectorVisFuncBtn.setToolTipText("Applies given function to all n-D points");
         vectorVisFuncBtn.setFont(vectorVisFuncBtn.getFont().deriveFont(12f));
-        vectorVisFuncBtn.addActionListener(_ ->
+        vectorVisFuncBtn.addActionListener(e ->
         {
             // popup asking for number of folds
             JPanel funcPanel = new JPanel();
@@ -1124,9 +1124,9 @@ public class VisualizationMenu extends JPanel
             funcPanel.add(textPanel);
 
             // add listeners
-            svmPolyFunc.addActionListener(_ -> funcField.setText("(1/" + DV.standardFieldLength + " * dot(x, y) + 1)^3"));
-            svmRBFFunc.addActionListener(_ -> funcField.setText("e^(-1/" + DV.standardFieldLength + " * norm(vSub(x, y))^2)"));
-            noFunc.addActionListener(_ -> funcField.setText("N/A"));
+            svmPolyFunc.addActionListener(ev -> funcField.setText("(1/" + DV.standardFieldLength + " * dot(x, y) + 1)^3"));
+            svmRBFFunc.addActionListener(ev -> funcField.setText("e^(-1/" + DV.standardFieldLength + " * norm(vSub(x, y))^2)"));
+            noFunc.addActionListener(ev -> funcField.setText("N/A"));
 
             funcField.addKeyListener(new KeyListener()
             {
@@ -1299,7 +1299,7 @@ public class VisualizationMenu extends JPanel
     private static JButton getUserVectors()
     {
         JButton userVecInput = new JButton("User n-D Points Input");
-        userVecInput.addActionListener(_ ->
+        userVecInput.addActionListener(e ->
         {
             if (!DV.trainData.isEmpty())
             {
@@ -1367,7 +1367,7 @@ public class VisualizationMenu extends JPanel
         JCheckBox visOverlapBox = new JCheckBox("Visualize Overlap");
         visOverlapBox.setToolTipText("Visualize the overlap area");
         visOverlapBox.setFont(visOverlapBox.getFont().deriveFont(12f));
-        visOverlapBox.addActionListener(_ ->
+        visOverlapBox.addActionListener(e ->
         {
             DV.drawOverlap = visOverlapBox.isSelected();
 
@@ -1388,7 +1388,7 @@ public class VisualizationMenu extends JPanel
         JCheckBox visOnlySVMBox = new JCheckBox("Visualize Only SVM");
         visOnlySVMBox.setToolTipText("Visualize only support vectors.");
         visOnlySVMBox.setFont(visOnlySVMBox.getFont().deriveFont(12f));
-        visOnlySVMBox.addActionListener(_ ->
+        visOnlySVMBox.addActionListener(e ->
         {
             DV.drawOnlySVM = visOnlySVMBox.isSelected();
 
@@ -1409,7 +1409,7 @@ public class VisualizationMenu extends JPanel
         JCheckBox svmVisBox = new JCheckBox("Visualize SVM", DV.drawSVM);
         svmVisBox.setToolTipText("Visualize support vectors along with all other data.");
         svmVisBox.setFont(svmVisBox.getFont().deriveFont(12f));
-        svmVisBox.addActionListener(_ ->
+        svmVisBox.addActionListener(e ->
         {
             DV.drawSVM = svmVisBox.isSelected();
 
@@ -1430,7 +1430,7 @@ public class VisualizationMenu extends JPanel
         JCheckBox domainActiveBox = new JCheckBox("Domain Active", DV.domainActive);
         domainActiveBox.setToolTipText("Whether the domain is active or not.");
         domainActiveBox.setFont(domainActiveBox.getFont().deriveFont(12f));
-        domainActiveBox.addActionListener(_ ->
+        domainActiveBox.addActionListener(e ->
         {
             DV.domainActive = domainActiveBox.isSelected();
             if (DV.trainData != null)
@@ -1450,7 +1450,7 @@ public class VisualizationMenu extends JPanel
         JCheckBox drawFirstLineBox = new JCheckBox("First Line", DV.showFirstSeg);
         drawFirstLineBox.setToolTipText("Whether to draw the first line segment of a graph or not.");
         drawFirstLineBox.setFont(drawFirstLineBox.getFont().deriveFont(12f));
-        drawFirstLineBox.addActionListener(_ ->
+        drawFirstLineBox.addActionListener(e ->
         {
             DV.showFirstSeg = drawFirstLineBox.isSelected();
             if (DV.trainData != null)
@@ -1470,7 +1470,7 @@ public class VisualizationMenu extends JPanel
         JCheckBox drawMidpointsBox = new JCheckBox("Midpoints", DV.showFirstSeg);
         drawMidpointsBox.setToolTipText("Whether to draw midpoints when two angles are equal in a graph or not.");
         drawMidpointsBox.setFont(drawMidpointsBox.getFont().deriveFont(12f));
-        drawMidpointsBox.addActionListener(_ ->
+        drawMidpointsBox.addActionListener(e ->
         {
             DV.showMidpoints = drawMidpointsBox.isSelected();
             if (DV.trainData != null)
@@ -1490,7 +1490,7 @@ public class VisualizationMenu extends JPanel
         JButton separateVisBtn = new JButton("Visualization Window");
         separateVisBtn.setToolTipText("Open another window displaying the visualization");
         separateVisBtn.setFont(separateVisBtn.getFont().deriveFont(12f));
-        separateVisBtn.addActionListener(_ ->
+        separateVisBtn.addActionListener(e ->
         {
             if (!DV.displayRemoteGraphs)
             {

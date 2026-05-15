@@ -1,2 +1,6 @@
 out/production/DV/*
 *.class
+build/
+.venv-package/
+source/Python/code_and_pyinstaller_spec/build/
+source/Python/code_and_pyinstaller_spec/dist/

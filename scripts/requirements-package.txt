@@ -1,0 +1,7 @@
+# Python deps for scripts/package-dv.ps1 (PyInstaller bundles).
+# Use Python 3.10-3.12 (see package-dv.ps1); 3.13+ is not supported by PyInstaller 5.x.
+pyinstaller>=5.1,<6
+setuptools>=65,<82
+numpy
+pandas
+scikit-learn
